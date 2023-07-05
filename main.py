@@ -1,30 +1,44 @@
 import streamlit as st
 import openai
+import os
 
-# Retrieve the API key from Streamlit secrets
-api_key = st.secrets["api_key"]
-
-# Initialize the OpenAI API client
+# Retrieve API key from environment variable
+api_key = os.getenv("OPENAI_API_KEY")
 openai.api_key = api_key
 
-# Streamlit app code
 def main():
-    st.title("Audio Transcription")
-
-    # File uploader
-    audio_file = st.file_uploader("Upload an audio file", type=["mp3", "wav"])
-
+    st.title("Audio Transcription with OpenAI")
+    
+    # Upload audio file
+    audio_file = st.file_uploader("Upload audio file", type=["mp3", "wav"])
+    
     if audio_file is not None:
-        # Convert audio to text
+        # Transcribe audio
+        st.text("Transcribing audio...")
         transcript = transcribe_audio(audio_file)
-        st.header("Transcript")
-        st.write(transcript)
+        
+        # Display the transcript
+        st.text_area("Transcript", transcript)
+    
+    else:
+        st.warning("Please upload an audio file.")
 
 def transcribe_audio(audio_file):
-    # Convert audio to text using the OpenAI API
-    response = openai.Audio.transcribe("whisper-1", audio_file)
-    return response["transcriptions"][0]["transcript"]
+    try:
+        # Read audio file content
+        audio_content = audio_file.read()
+        
+        # Call OpenAI API to transcribe the audio
+        response = openai.Audio.transcribe("whisper-1", audio_content)
+        
+        # Get the transcript
+        transcript = response['transcriptions'][0]['text']
+        
+        return transcript
+    
+    except Exception as e:
+        st.error(f"Error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()
-  
+
